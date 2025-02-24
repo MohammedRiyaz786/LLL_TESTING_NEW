@@ -1,7 +1,7 @@
 from collections import Counter
 import string
 import evaluate
-import stremlit as st
+import streamlit  as st
 from difflib import SequenceMatcher
 
 class MetricsCalculator:
