@@ -1,0 +1,17 @@
+datasets
+transformers
+evaluate
+torch
+pytest
+streamlit
+rouge-score
+scikit-metrics
+matplotlib
+pandas
+langchain-ollama
+regex
+google-generativeai
+python-dotenv
+sacrebleu
+psutil
+bert-score
