@@ -2,6 +2,7 @@ from collections import Counter
 import string
 import evaluate
 import streamlit  as st
+from typing import Dict, List, Tuple, Any
 from difflib import SequenceMatcher
 
 class MetricsCalculator:
