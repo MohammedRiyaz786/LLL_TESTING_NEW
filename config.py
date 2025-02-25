@@ -11,7 +11,7 @@ MODEL_CONFIGS = {
         "Translation": ["t5-base", "mbart-large-50-many-to-many-mmt"],
         "Question Answering": ["deberta-v3-large-squad2", "roberta-base-squad2"],
         "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
-        "Text Generation": ["gpt2", "gpt2-medium","bart-large-cnn"],
+        "Text Generation": ["bart-large-cnn"],
         "Text-to-Text Generation": ["t5-small", "t5-base"]
     }
 }
