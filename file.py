@@ -24,7 +24,7 @@ from collections import Counter
 from deepeval import evaluate as deepeval_evaluate
 from deepeval.metrics import SummarizationMetric
 from deepeval.test_case import LLMTestCase
-from deepeval.models import CustomLLM
+
 
 
 load_dotenv()
