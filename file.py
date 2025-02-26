@@ -25,6 +25,9 @@ from deepeval import evaluate as deepeval_evaluate
 from deepeval.metrics import SummarizationMetric
 from deepeval.test_case import LLMTestCase
 
+from deepeval.models.base_model import DeepEvalBaseLLM
+
+
 
 
 load_dotenv()
