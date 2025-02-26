@@ -24,6 +24,7 @@ from collections import Counter
 from deepeval import evaluate as deepeval_evaluate
 from deepeval.metrics import SummarizationMetric
 from deepeval.test_case import LLMTestCase
+from deepeval.models import CustomLLM
 
 
 load_dotenv()
@@ -314,38 +315,95 @@ class MetricsCalculator:
             # DeepEval metrics (ethical testing)
             if task == "Summarization":
                 try:
-                    with st.spinner("Calculating ethical metrics..."):
-                        # Create a test case using the input text (if available) or reference
-                        test_case = LLMTestCase(
-                            input=input_text if input_text else reference, 
-                            actual_output=prediction
-                        )
+                                with st.spinner("Calculating ethical metrics using your local model..."):
+                                    # Create a test case using the input text (if available) or reference
+                                    test_case = LLMTestCase(
+                                        input=input_text if input_text else reference, 
+                                        actual_output=prediction
+                                    )
+                                    
+                                    # Setup custom model provider for DeepEval to use the local model
+                                    from deepeval.models import CustomLLM
+                                    
+                                    # Create a custom model wrapper that uses your local pipeline
+                                    class LocalModelWrapper(CustomLLM):
+                                        def __init__(self, model_name):
+                                            super().__init__()
+                                            self.model_name = model_name
+                                            self.local_executor = ModelExecutor()
+                                            self.pipeline = self.local_executor.get_local_model(model_name, "Summarization")
+                                        
+                                        def generate(self, prompt, **kwargs):
+                                            if self.pipeline:
+                                                try:
+                                                    result = self.local_executor.execute_small_model(
+                                                        self.pipeline, 
+                                                        prompt, 
+                                                        "Summarization"
+                                                    )
+                                                    return result
+                                                except Exception as e:
+                                                    st.warning(f"Error using local model in DeepEval: {str(e)}")
+                                                    return "Error generating response with local model"
+                                            return "Local model not available"
+                                    
+                                    # Initialize the custom model with your small model
+                                    local_model = LocalModelWrapper(small_model)
+                                    
+                                    # Initialize and run the SummarizationMetric with your custom model
+                                    summarization_metric = SummarizationMetric(
+                                        threshold=0.5,
+                                        model=local_model,  # Use your custom model wrapper
+                                        assessment_questions=[
+                                            "Is the summary accurate and free of hallucinations?",
+                                            "Does the summary maintain the main points of the original text?",
+                                            "Is the summary concise without losing important information?"
+                                        ]
+                                    )
+                                    
+                                    # Measure the metric
+                                    try:
+                                        hallucination_score = summarization_metric.measure(test_case)
+                                        ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
+                                        ethical_metrics['Hallucination Reason'] = summarization_metric.reason
+                                    except Exception as e:
+                                        st.warning(f"DeepEval summarization metric failed: {str(e)}")
+                            except Exception as e:
+                                st.warning(f"DeepEval metrics calculation failed: {str(e)}")
+            # if task == "Summarization":
+            #     try:
+            #         with st.spinner("Calculating ethical metrics..."):
+            #             # Create a test case using the input text (if available) or reference
+            #             test_case = LLMTestCase(
+            #                 input=input_text if input_text else reference, 
+            #                 actual_output=prediction
+            #             )
                         
-                        # Initialize and run the SummarizationMetric
-                        summarization_metric = SummarizationMetric(
-                            threshold=0.5,
-                            model=small_model,  # Use a model from MODEL_CONFIGS if appropriate
-                            assessment_questions=[
-                                "Is the summary accurate and free of hallucinations?",
-                                "Does the summary maintain the main points of the original text?",
-                                "Is the summary concise without losing important information?"
-                            ]
-                        )
+            #             # Initialize and run the SummarizationMetric
+            #             summarization_metric = SummarizationMetric(
+            #                 threshold=0.5,
+            #                 model=small_model,  # Use a model from MODEL_CONFIGS if appropriate
+            #                 assessment_questions=[
+            #                     "Is the summary accurate and free of hallucinations?",
+            #                     "Does the summary maintain the main points of the original text?",
+            #                     "Is the summary concise without losing important information?"
+            #                 ]
+            #             )
                         
-                        # Measure the metric
-                        try:
-                            hallucination_score = summarization_metric.measure(test_case)
-                            ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
-                            ethical_metrics['Hallucination Reason'] = summarization_metric.reason
-                        except Exception as e:
-                            st.warning(f"DeepEval summarization metric failed: {str(e)}")
-                except Exception as e:
-                    st.warning(f"DeepEval metrics calculation failed: {str(e)}")
+            #             # Measure the metric
+            #             try:
+            #                 hallucination_score = summarization_metric.measure(test_case)
+            #                 ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
+            #                 ethical_metrics['Hallucination Reason'] = summarization_metric.reason
+            #             except Exception as e:
+            #                 st.warning(f"DeepEval summarization metric failed: {str(e)}")
+            #     except Exception as e:
+            #         st.warning(f"DeepEval metrics calculation failed: {str(e)}")
             
-            if not results and not ethical_metrics:
-                st.warning("No metrics were successfully calculated.")
+            # if not results and not ethical_metrics:
+            #     st.warning("No metrics were successfully calculated.")
             
-            return results, ethical_metrics
+            # return results, ethical_metrics
 
         except Exception as e:
             st.error(f"Error in metric calculation: {str(e)}")
