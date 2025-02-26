@@ -27,7 +27,7 @@ class MetricsCalculator:
             reference = str(reference).strip()
             
             # Basic string similarity metrics for all tasks
-            results['string_similarity'] = self.compute_string_similarity(prediction, reference)
+            #results['string_similarity'] = self.compute_string_similarity(prediction, reference)
             
             # Task-specific metrics
             if task in ["Text Generation", "Summarization", "Text-to-Text Generation"]:
@@ -115,10 +115,10 @@ class MetricsCalculator:
             st.error(f"Error in metric calculation: {str(e)}")
             return {}
 
-    def compute_string_similarity(self, str1: str, str2: str) -> float:
-        """Compute basic string similarity score."""
-        from difflib import SequenceMatcher
-        return round(SequenceMatcher(None, str1, str2).ratio(), 4)
+    # def compute_string_similarity(self, str1: str, str2: str) -> float:
+    #     """Compute basic string similarity score."""
+    #     from difflib import SequenceMatcher
+    #     return round(SequenceMatcher(None, str1, str2).ratio(), 4)
 
     def compute_exact_match(self, prediction: str, reference: str) -> float:
         """Compute exact match score."""

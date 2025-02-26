@@ -114,7 +114,23 @@ class ModelExecutor:
         try:
             if task == "Text Classification":
                 result = model(input_text)
-                return f"Label: {result[0]['label']}, Score: {result[0]['score']:.3f}"
+                
+                # Extract label and score
+                label = result[0]['label']
+                score = result[0]['score']
+
+                # Apply the threshold condition
+                if label == 'positive' and score > 0.5:
+                    label = 'positive'
+                else:
+                    label = 'negative'
+                
+                return f"Label: {label}, Score: {score:.3f}"
+
+            # if task == "Text Classification":
+            #     result = model(input_text)
+            #     return f"Label: {result[0]['label']}, Score: {result[0]['score']:.3f}"
+
                 
             elif task == "Question Answering":
                 context = kwargs.get('context', '')
