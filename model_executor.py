@@ -125,7 +125,7 @@ class ModelExecutor:
                 else:
                     label = 'negative'
                 
-                return f"Label: {label}, Score: {score:.3f}"
+                return f" {label}"
 
             # if task == "Text Classification":
             #     result = model(input_text)
