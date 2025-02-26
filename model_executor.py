@@ -95,7 +95,7 @@ class ModelExecutor:
         "Summarization": "Summarize the following text concisely:",
         "Translation": f"Translate the following text from {kwargs.get('src_lang', 'source language')} to {kwargs.get('tgt_lang', 'target language')}:",
         "Question Answering": "Answer the following question based on the given context:",
-        "Text Classification": "Classify the following text in just one word :",
+        "Text Classification": "Classify the sentiment of the following text as either 'Positive' or 'Negative' in just one word :",
         "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
     }
                 system_prompt = system_prompts.get(task, "")
