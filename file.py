@@ -3,7 +3,6 @@ import torch
 from transformers import (
     pipeline,
     AutoTokenizer,
-    #AutoModelForSeq2SeqGeneration,
     AutoModelForCausalLM,
     AutoModelForQuestionAnswering,
     AutoModelForSequenceClassification
@@ -21,6 +20,10 @@ import evaluate
 import string
 from dotenv import load_dotenv
 from collections import Counter
+# Import DeepEval
+from deepeval import evaluate as deepeval_evaluate
+from deepeval.metrics import SummarizationMetric
+from deepeval.test_case import LLMTestCase
 
 
 load_dotenv()
@@ -218,9 +221,10 @@ class MetricsCalculator:
             "Text-to-Text Generation": "text2text-generation"
         }
 
-    def calculate_metrics(self, prediction: str, reference: str, task: str) -> Dict[str, float]:
-        """Calculate metrics between model outputs based on task type."""
+    def calculate_metrics(self, prediction: str, reference: str, task: str, input_text: str = "", small_model: str = "") -> Tuple[Dict[str, float], Dict[str, float]]:
+        """Calculate metrics between model outputs based on task type, returning both regular and ethical metrics."""
         results = {}
+        ethical_metrics = {}
         
         try:
             # Ensure inputs are strings and properly formatted
@@ -307,14 +311,45 @@ class MetricsCalculator:
             except Exception as e:
                 st.warning(f"BERTScore computation failed: {str(e)}")
             
-            if not results:
+            # DeepEval metrics (ethical testing)
+            if task == "Summarization":
+                try:
+                    with st.spinner("Calculating ethical metrics..."):
+                        # Create a test case using the input text (if available) or reference
+                        test_case = LLMTestCase(
+                            input=input_text if input_text else reference, 
+                            actual_output=prediction
+                        )
+                        
+                        # Initialize and run the SummarizationMetric
+                        summarization_metric = SummarizationMetric(
+                            threshold=0.5,
+                            model=small_model,  # Use a model from MODEL_CONFIGS if appropriate
+                            assessment_questions=[
+                                "Is the summary accurate and free of hallucinations?",
+                                "Does the summary maintain the main points of the original text?",
+                                "Is the summary concise without losing important information?"
+                            ]
+                        )
+                        
+                        # Measure the metric
+                        try:
+                            hallucination_score = summarization_metric.measure(test_case)
+                            ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
+                            ethical_metrics['Hallucination Reason'] = summarization_metric.reason
+                        except Exception as e:
+                            st.warning(f"DeepEval summarization metric failed: {str(e)}")
+                except Exception as e:
+                    st.warning(f"DeepEval metrics calculation failed: {str(e)}")
+            
+            if not results and not ethical_metrics:
                 st.warning("No metrics were successfully calculated.")
             
-            return results
+            return results, ethical_metrics
 
         except Exception as e:
             st.error(f"Error in metric calculation: {str(e)}")
-            return {}
+            return {}, {}
 
     def compute_string_similarity(self, str1: str, str2: str) -> float:
         """Compute basic string similarity score."""
@@ -441,23 +476,38 @@ def main():
                             small_model_output = str(small_model_output)
                             big_model_output = str(big_model_output)
                             
-                            metric_results = metrics_calculator.calculate_metrics(
+                            # New: Get both standard and ethical metrics
+                            metric_results, ethical_metric_results = metrics_calculator.calculate_metrics(
                                 prediction=small_model_output,
                                 reference=big_model_output,
-                                task=task
+                                task=task,
+                                input_text=input_text,
+                                small_model=small_model
                             )
                             
                             # Update results dictionary
                             results_dict["metrics"] = metric_results
+                            results_dict["ethical_metrics"] = ethical_metric_results
+                            
+                            # Display standard metrics
                             if metric_results:
-                                st.subheader("Metric Scores")
+                                st.subheader("Standard Metric Scores")
                                 metrics_df = pd.DataFrame([
                                     {"Metric": metric, "Score": f"{score:.4f}"} 
                                     for metric, score in metric_results.items()
                                 ])
                                 st.table(metrics_df)
                             else:
-                                st.warning("No metrics were calculated for this task type.")
+                                st.warning("No standard metrics were calculated for this task type.")
+                            
+                            # Display ethical metrics (in a separate table)
+                            if ethical_metric_results:
+                                st.subheader("Ethical Evaluation Metrics")
+                                ethical_metrics_df = pd.DataFrame([
+                                    {"Metric": metric, "Value": value if isinstance(value, str) else f"{value:.4f}"} 
+                                    for metric, value in ethical_metric_results.items()
+                                ])
+                                st.table(ethical_metrics_df)
                                 
                         except Exception as e:
                             st.error(f"Error calculating metrics: {str(e)}")
