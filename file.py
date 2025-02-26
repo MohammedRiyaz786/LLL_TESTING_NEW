@@ -55,6 +55,41 @@ TASK_METRICS = {
     "Text Classification": ["accuracy", "precision", "recall", "f1", "roc_auc", "matthews_correlation"],
     "Text-to-Text Generation": ["bleu", "rouge", "meteor", "bertscore"]
 }
+class CustomModelWrapper(DeepEvalBaseLLM):
+    def __init__(self, model_name, task):
+        self.model_name = model_name
+        self.task = task
+        self.model_executor = ModelExecutor()
+        self.pipeline = None
+        # We'll lazy load the pipeline when needed to avoid loading it multiple times
+
+    def load_model(self):
+        if self.pipeline is None:
+            self.pipeline = self.model_executor.get_local_model(self.model_name, self.task)
+        return self.pipeline
+
+    def generate(self, prompt: str) -> str:
+        pipeline = self.load_model()
+        if pipeline:
+            try:
+                result = self.model_executor.execute_small_model(
+                    pipeline, 
+                    prompt, 
+                    self.task
+                )
+                return str(result)
+            except Exception as e:
+                import streamlit as st
+                st.warning(f"Error generating with local model: {str(e)}")
+                return f"Error generating response with {self.model_name}"
+        return f"Failed to load model {self.model_name}"
+
+    async def a_generate(self, prompt: str) -> str:
+        # Synchronous fallback for async calls
+        return self.generate(prompt)
+
+    def get_model_name(self):
+        return self.model_name
 
 class ModelExecutor:
     def __init__(self):
@@ -322,53 +357,30 @@ class MetricsCalculator:
                         )
 
                         # Setup custom model provider for DeepEval to use the local model
-                        from deepeval.models import CustomLLM
-
-                        # Create a custom model wrapper that uses your local pipeline
-                        class LocalModelWrapper(CustomLLM):
-                            def __init__(self, model_name):
-                                super().__init__()
-                                self.model_name = model_name
-                                self.local_executor = ModelExecutor()
-                                self.pipeline = self.local_executor.get_local_model(model_name, "Summarization")
-
-                            def generate(self, prompt, **kwargs):
-                                if self.pipeline:
-                                    try:
-                                        result = self.local_executor.execute_small_model(
-                                            self.pipeline, 
-                                            prompt, 
-                                            "Summarization"
-                                        )
-                                        return result
-                                    except Exception as e:
-                                        st.warning(f"Error using local model in DeepEval: {str(e)}")
-                                        return "Error generating response with local model"
-                                return "Local model not available"
-
-                        # Initialize the custom model with your small model
-                        local_model = LocalModelWrapper(small_model)
-
-                        # Initialize and run the SummarizationMetric with your custom model
+                        custom_model = CustomModelWrapper(small_model, task)
                         summarization_metric = SummarizationMetric(
-                            threshold=0.5,
-                            model=local_model,  # Use your custom model wrapper
-                            assessment_questions=[
-                                "Is the summary accurate and free of hallucinations?",
-                                "Does the summary maintain the main points of the original text?",
-                                "Is the summary concise without losing important information?"
-                            ]
-                        )
-
-                        # Measure the metric
-                        try:
-                            hallucination_score = summarization_metric.measure(test_case)
-                            ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
-                            ethical_metrics['Hallucination Reason'] = summarization_metric.reason
-                        except Exception as e:
-                            st.warning(f"DeepEval summarization metric failed: {str(e)}")
+                        threshold=0.5,
+                        model=custom_model,  # Pass your custom model instance
+                        assessment_questions=[
+                            "Is the summary accurate and free of hallucinations?",
+                            "Does the summary maintain the main points of the original text?",
+                            "Is the summary concise without losing important information?"
+                        ]
+                    )
+                                            # Measure the metric
+                    try:
+                        hallucination_score = summarization_metric.measure(test_case)
+                        ethical_metrics['Hallucination Score'] = round(hallucination_score, 4)
+                        ethical_metrics['Hallucination Reason'] = summarization_metric.reason
+                    except Exception as e:
+                        st.warning(f"DeepEval summarization metric failed: {str(e)}")
+                        st.warning(f"Error details: {str(e)}")
                 except Exception as e:
                     st.warning(f"DeepEval metrics calculation failed: {str(e)}")
+                    st.warning(f"Error details: {str(e)}")
+
+
+ 
 
             return results, ethical_metrics
 
