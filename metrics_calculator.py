@@ -157,8 +157,9 @@ import streamlit as st
 from typing import Dict, List, Tuple, Any
 from difflib import SequenceMatcher
 import re
+import os
 import nltk
-from nltk.tokenize import sent_tokenize, word_tokenize
+import ssl
 
 class MetricsCalculator:
     def __init__(self):
@@ -172,12 +173,55 @@ class MetricsCalculator:
             "Text-to-Text Generation": "text2text-generation"
         }
         
-        # Download NLTK data if not already present
+        # Force download NLTK data with error handling
+        self._download_nltk_data()
+
+    def _download_nltk_data(self):
+        """Download NLTK data with robust error handling"""
         try:
-            # Try to download punkt if not already present
-            nltk.download('punkt', quiet=True)
+            # Fix SSL certificate issues if any
+            try:
+                _create_unverified_https_context = ssl._create_unverified_context
+            except AttributeError:
+                pass
+            else:
+                ssl._create_default_https_context = _create_unverified_https_context
+            
+            # Create data directory if it doesn't exist
+            nltk_data_dir = os.path.expanduser('~/nltk_data')
+            os.makedirs(nltk_data_dir, exist_ok=True)
+            
+            # Download punkt
+            nltk.download('punkt', download_dir=nltk_data_dir)
+            
+            # Explicitly set the data path
+            nltk.data.path.append(nltk_data_dir)
+            
+            # Verify download was successful
+            tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+            st.success("NLTK resources successfully loaded")
+            
         except Exception as e:
-            st.warning(f"NLTK download failed: {str(e)}")
+            st.error(f"Failed to download NLTK resources: {str(e)}")
+            # Fallback implementation for sentence tokenization
+            self._create_fallback_tokenizers()
+    
+    def _create_fallback_tokenizers(self):
+        """Create fallback tokenization functions if NLTK fails"""
+        # Simple regex-based sentence tokenizer
+        def simple_sent_tokenize(text):
+            return re.split(r'(?<=[.!?])\s+', text)
+        
+        # Simple word tokenizer
+        def simple_word_tokenize(text):
+            return re.findall(r'\b\w+\b', text)
+        
+        # Replace NLTK functions with our fallbacks
+        global sent_tokenize, word_tokenize
+        sent_tokenize = simple_sent_tokenize
+        word_tokenize = simple_word_tokenize
+        
+        st.warning("Using fallback tokenizers due to NLTK download failure")
 
     def calculate_metrics(self, prediction: str, reference: str, task: str) -> Dict[str, float]:
         """Calculate metrics between model outputs based on task type."""
@@ -187,9 +231,6 @@ class MetricsCalculator:
             # Ensure inputs are strings and properly formatted
             prediction = str(prediction).strip()
             reference = str(reference).strip()
-            
-            # Basic string similarity metrics for all tasks
-            #results['string_similarity'] = self.compute_string_similarity(prediction, reference)
             
             # Task-specific metrics
             if task in ["Text Generation", "Summarization", "Text-to-Text Generation"]:
@@ -201,7 +242,6 @@ class MetricsCalculator:
                         references=[reference],
                         use_stemmer=True
                     )
-                    # Handle new ROUGE format
                     results.update({
                         'rouge1': round(rouge_scores['rouge1'], 4),
                         'rouge2': round(rouge_scores['rouge2'], 4),
@@ -284,19 +324,26 @@ class MetricsCalculator:
         results = {}
         
         try:
-            # Make sure NLTK punkt is downloaded
+            # Define tokenize functions - use our fallbacks if NLTK fails
             try:
-                nltk.download('punkt', quiet=True)
-            except Exception as e:
-                return {'error': f"Failed to download NLTK resources: {str(e)}"}
+                from nltk.tokenize import sent_tokenize as nltk_sent_tokenize
+                from nltk.tokenize import word_tokenize as nltk_word_tokenize
+                sent_tokenize_func = nltk_sent_tokenize
+                word_tokenize_func = nltk_word_tokenize
+            except ImportError:
+                # Simple regex-based sentence tokenizer fallback
+                sent_tokenize_func = lambda text: re.split(r'(?<=[.!?])\s+', text)
+                # Simple word tokenizer fallback
+                word_tokenize_func = lambda text: re.findall(r'\b\w+\b', text)
+                st.warning("Using fallback tokenizers for hallucination analysis")
             
             # Tokenize text into sentences
-            source_sentences = sent_tokenize(source_text)
-            summary_sentences = sent_tokenize(summary)
+            source_sentences = sent_tokenize_func(source_text)
+            summary_sentences = sent_tokenize_func(summary)
             
             # Tokenize into words
-            source_words = word_tokenize(source_text.lower())
-            summary_words = word_tokenize(summary.lower())
+            source_words = word_tokenize_func(source_text.lower())
+            summary_words = word_tokenize_func(summary.lower())
             
             # Remove punctuation and stopwords
             source_words = [word for word in source_words if word.isalnum()]
@@ -439,5 +486,5 @@ class MetricsCalculator:
         """Normalize answer for consistent comparison."""
         text = text.lower()
         text = ''.join(ch for ch in text if ch not in string.punctuation)
-        text = ' '.join(text.split())
+        text = ' '.split(text.split())
         return text
