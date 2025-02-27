@@ -157,8 +157,8 @@ import streamlit as st
 from typing import Dict, List, Tuple, Any
 from difflib import SequenceMatcher
 import re
-from nltk.tokenize import sent_tokenize, word_tokenize
 import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 class MetricsCalculator:
     def __init__(self):
@@ -174,9 +174,10 @@ class MetricsCalculator:
         
         # Download NLTK data if not already present
         try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            nltk.download('punkt')
+            # Try to download punkt if not already present
+            nltk.download('punkt', quiet=True)
+        except Exception as e:
+            st.warning(f"NLTK download failed: {str(e)}")
 
     def calculate_metrics(self, prediction: str, reference: str, task: str) -> Dict[str, float]:
         """Calculate metrics between model outputs based on task type."""
@@ -283,6 +284,12 @@ class MetricsCalculator:
         results = {}
         
         try:
+            # Make sure NLTK punkt is downloaded
+            try:
+                nltk.download('punkt', quiet=True)
+            except Exception as e:
+                return {'error': f"Failed to download NLTK resources: {str(e)}"}
+            
             # Tokenize text into sentences
             source_sentences = sent_tokenize(source_text)
             summary_sentences = sent_tokenize(summary)
