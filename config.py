@@ -15,7 +15,7 @@ MODEL_CONFIGS = {
             "Spam Detection": ["bert-tiny-finetuned-sms-spam-detection"]
         },
         # "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
-        "Text Generation": ["bart-large-cnn"],
+        "Text Generation": ["bart-large-cnn","t5-small", "t5-base"],
         "Text-to-Text Generation": ["t5-small", "t5-base"]
     }
 }
