@@ -191,15 +191,35 @@ class MetricsCalculator:
             nltk_data_dir = os.path.expanduser('~/nltk_data')
             os.makedirs(nltk_data_dir, exist_ok=True)
             
-            # Download punkt
-            nltk.download('punkt', download_dir=nltk_data_dir)
+            # Download punkt with verbose output
+            nltk.download('punkt', download_dir=nltk_data_dir, quiet=False)
             
-            # Explicitly set the data path
-            nltk.data.path.append(nltk_data_dir)
+            # Ensure NLTK knows where to find data
+            if nltk_data_dir not in nltk.data.path:
+                nltk.data.path.insert(0, nltk_data_dir)
             
-            # Verify download was successful - use the correct path
-            tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')  # <- THIS IS THE CORRECT PATH
-            st.success("NLTK resources successfully loaded")
+            # Try to load the punkt tokenizer 
+            try:
+                tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+                st.success("NLTK resources successfully loaded")
+            except LookupError:
+                # If that path doesn't work, try alternative paths that might be used
+                try:
+                    # Look for the actual file to confirm where it is
+                    file_paths = []
+                    for path in nltk.data.path:
+                        possible_path = os.path.join(path, 'tokenizers', 'punkt', 'english.pickle')
+                        if os.path.exists(possible_path):
+                            file_paths.append(possible_path)
+                    
+                    if file_paths:
+                        st.info(f"Found punkt files at: {', '.join(file_paths)}")
+                        tokenizer = nltk.data.load(file_paths[0])
+                    else:
+                        raise LookupError("Couldn't find punkt resource file")
+                except Exception as inner_e:
+                    st.warning(f"Alternate loading also failed: {str(inner_e)}")
+                    raise
                 
         except Exception as e:
             st.error(f"Failed to download NLTK resources: {str(e)}")
