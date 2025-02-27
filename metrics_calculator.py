@@ -177,7 +177,7 @@ class MetricsCalculator:
         self._download_nltk_data()
 
     def _download_nltk_data(self):
-        """Download NLTK data with robust error handling"""
+        """Download NLTK data and set up tokenizers with robust error handling"""
         try:
             # Fix SSL certificate issues if any
             try:
@@ -191,41 +191,24 @@ class MetricsCalculator:
             nltk_data_dir = os.path.expanduser('~/nltk_data')
             os.makedirs(nltk_data_dir, exist_ok=True)
             
-            # Download punkt with verbose output
+            # Try to download punkt
             nltk.download('punkt', download_dir=nltk_data_dir, quiet=False)
             
-            # Ensure NLTK knows where to find data
-            if nltk_data_dir not in nltk.data.path:
-                nltk.data.path.insert(0, nltk_data_dir)
+            # Skip verifying with pickle loading and directly use the NLTK tokenizers
+            global sent_tokenize, word_tokenize
+            from nltk.tokenize import sent_tokenize, word_tokenize
             
-            # Try to load the punkt tokenizer 
-            try:
-                tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-                st.success("NLTK resources successfully loaded")
-            except LookupError:
-                # If that path doesn't work, try alternative paths that might be used
-                try:
-                    # Look for the actual file to confirm where it is
-                    file_paths = []
-                    for path in nltk.data.path:
-                        possible_path = os.path.join(path, 'tokenizers', 'punkt', 'english.pickle')
-                        if os.path.exists(possible_path):
-                            file_paths.append(possible_path)
-                    
-                    if file_paths:
-                        st.info(f"Found punkt files at: {', '.join(file_paths)}")
-                        tokenizer = nltk.data.load(file_paths[0])
-                    else:
-                        raise LookupError("Couldn't find punkt resource file")
-                except Exception as inner_e:
-                    st.warning(f"Alternate loading also failed: {str(inner_e)}")
-                    raise
+            # Test the tokenizers on a simple sentence
+            if len(sent_tokenize("Hello world. Test sentence.")) == 2:
+                st.success("NLTK tokenizers successfully configured")
+            else:
+                raise Exception("Tokenizer test failed")
                 
         except Exception as e:
-            st.error(f"Failed to download NLTK resources: {str(e)}")
+            st.error(f"Failed to configure NLTK tokenizers: {str(e)}")
             # Fallback implementation for sentence tokenization
             self._create_fallback_tokenizers()
-    
+        
     def _create_fallback_tokenizers(self):
         """Create fallback tokenization functions if NLTK fails"""
         # Simple regex-based sentence tokenizer
@@ -346,11 +329,15 @@ class MetricsCalculator:
         try:
             # Define tokenize functions - use our fallbacks if NLTK fails
             try:
-                from nltk.tokenize import sent_tokenize as nltk_sent_tokenize
-                from nltk.tokenize import word_tokenize as nltk_word_tokenize
-                sent_tokenize_func = nltk_sent_tokenize
-                word_tokenize_func = nltk_word_tokenize
-            except ImportError:
+                from nltk.tokenize import sent_tokenize, word_tokenize
+                # Test if they work correctly
+                test_sent = sent_tokenize("Test sentence. Another test.")
+                if len(test_sent) >= 2:
+                    sent_tokenize_func = sent_tokenize
+                    word_tokenize_func = word_tokenize
+                else:
+                    raise ImportError("NLTK tokenizers failed verification test")
+            except (ImportError, NameError):
                 # Simple regex-based sentence tokenizer fallback
                 sent_tokenize_func = lambda text: re.split(r'(?<=[.!?])\s+', text)
                 # Simple word tokenizer fallback
