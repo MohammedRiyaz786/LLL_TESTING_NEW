@@ -139,28 +139,65 @@ class ModelExecutor:
             if task == "Text Classification":
                 result = model(input_text)
                 
-                # HIGHLIGHT: Updated to handle different classification types
-                classification_type = kwargs.get('classification_type', 'Sentiment Analysis')
+                # Debugging output to see the actual model response
+                st.info(f"Debug - Raw model output: {result}")
                 
                 # Extract label and score
-                label = result[0]['label']
-                score = result[0]['score']
+                classification_type = kwargs.get('classification_type', 'Sentiment Analysis')
                 
+                # Different handling based on classification type
                 if classification_type == "Sentiment Analysis":
+                    label = result[0]['label']
+                    score = result[0]['score']
+                    
                     # Apply threshold for sentiment analysis
                     if label == 'positive' and score > 0.5:
                         return "Positive"
                     else:
                         return "Negative"
+                        
                 elif classification_type == "Spam Detection":
-                    # For spam detection models
-                    if label.lower() == 'spam':
+                    # Get the raw label - many spam detection models use 'spam'/'ham' or numeric labels
+                    label = result[0]['label']
+                    score = result[0]['score']
+                    
+                    # Check for common spam detection label patterns
+                    if label.lower() == 'spam' or label == '1' or label == 1:
                         return "Spam"
-                    else:
+                    elif label.lower() == 'ham' or label == '0' or label == 0:
                         return "Not Spam"
+                    else:
+                        # Fallback based on score if label is unclear
+                        # Assuming higher score means more likely to be spam
+                        return "Spam" if score > 0.5 else "Not Spam"
                 
                 # Fallback 
                 return f"{label}"
+            # if task == "Text Classification":
+            #     result = model(input_text)
+                
+            #     # HIGHLIGHT: Updated to handle different classification types
+            #     classification_type = kwargs.get('classification_type', 'Sentiment Analysis')
+                
+            #     # Extract label and score
+            #     label = result[0]['label']
+            #     score = result[0]['score']
+                
+            #     if classification_type == "Sentiment Analysis":
+            #         # Apply threshold for sentiment analysis
+            #         if label == 'positive' and score > 0.5:
+            #             return "Positive"
+            #         else:
+            #             return "Negative"
+            #     elif classification_type == "Spam Detection":
+            #         # For spam detection models
+            #         if label.lower() == 'spam':
+            #             return "Spam"
+            #         else:
+            #             return "Not Spam"
+                
+            #     # Fallback 
+            #     return f"{label}"
                 
             elif task == "Question Answering":
                 context = kwargs.get('context', '')
