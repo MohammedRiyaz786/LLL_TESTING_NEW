@@ -16,10 +16,7 @@ def main():
     # Sidebar for model and task selection
     st.sidebar.header("Configuration")
     task = st.sidebar.selectbox("Select Task the target model is trained for", list(TASK_METRICS.keys()))
-        # Display sub-options for Text Classification in sidebar
-    if task == "Text Classification":
-        classification_type = st.sidebar.radio("Select Classification Type", ["Sentiment Analysis", "Spam Detection"])
-        task = classification_type  # Update the task dynamically
+    
     
     # Changed: Show all big models in a single dropdown
     big_model = st.sidebar.selectbox("Select the Tester Model", MODEL_CONFIGS["big_models"])
