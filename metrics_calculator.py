@@ -177,40 +177,12 @@ class MetricsCalculator:
         self._download_nltk_data()
 
     def _download_nltk_data(self):
-        """Download NLTK data and set up tokenizers with robust error handling"""
-        try:
-            # Fix SSL certificate issues if any
-            try:
-                _create_unverified_https_context = ssl._create_unverified_context
-            except AttributeError:
-                pass
-            else:
-                ssl._create_default_https_context = _create_unverified_https_context
-            
-            # Create data directory if it doesn't exist
-            nltk_data_dir = os.path.expanduser('~/nltk_data')
-            os.makedirs(nltk_data_dir, exist_ok=True)
-            
-            # Try to download punkt
-            nltk.download('punkt', download_dir=nltk_data_dir, quiet=False)
-            
-            # Skip verifying with pickle loading and directly use the NLTK tokenizers
-            global sent_tokenize, word_tokenize
-            from nltk.tokenize import sent_tokenize, word_tokenize
-            
-            # Test the tokenizers on a simple sentence
-            if len(sent_tokenize("Hello world. Test sentence.")) == 2:
-                st.success("NLTK tokenizers successfully configured")
-            else:
-                raise Exception("Tokenizer test failed")
-                
-        except Exception as e:
-            st.error(f"Failed to configure NLTK tokenizers: {str(e)}")
-            # Fallback implementation for sentence tokenization
-            self._create_fallback_tokenizers()
+        """Skip NLTK download and use fallback tokenizers"""
+        st.info("Using custom tokenizers for text processing")
+        self._create_fallback_tokenizers()
         
     def _create_fallback_tokenizers(self):
-        """Create fallback tokenization functions if NLTK fails"""
+        """Create fallback tokenization functions"""
         # Simple regex-based sentence tokenizer
         def simple_sent_tokenize(text):
             return re.split(r'(?<=[.!?])\s+', text)
@@ -219,12 +191,10 @@ class MetricsCalculator:
         def simple_word_tokenize(text):
             return re.findall(r'\b\w+\b', text)
         
-        # Replace NLTK functions with our fallbacks
+        # Make these available globally
         global sent_tokenize, word_tokenize
         sent_tokenize = simple_sent_tokenize
         word_tokenize = simple_word_tokenize
-        
-        st.warning("Using fallback tokenizers due to NLTK download failure")
 
     def calculate_metrics(self, prediction: str, reference: str, task: str) -> Dict[str, float]:
         """Calculate metrics between model outputs based on task type."""
@@ -329,14 +299,13 @@ class MetricsCalculator:
         try:
             # Define tokenize functions - use our fallbacks if NLTK fails
             try:
-                from nltk.tokenize import sent_tokenize, word_tokenize
-                # Test if they work correctly
-                test_sent = sent_tokenize("Test sentence. Another test.")
-                if len(test_sent) >= 2:
-                    sent_tokenize_func = sent_tokenize
-                    word_tokenize_func = word_tokenize
-                else:
-                    raise ImportError("NLTK tokenizers failed verification test")
+                # These should be available globally after _create_fallback_tokenizers is called
+                sent_tokenize_func = sent_tokenize
+                word_tokenize_func = word_tokenize
+            except (NameError, AttributeError):
+                # Define inline as a backup
+                sent_tokenize_func = lambda text: re.split(r'(?<=[.!?])\s+', text)
+                word_tokenize_func = lambda text: re.findall(r'\b\w+\b', text)
             except (ImportError, NameError):
                 # Simple regex-based sentence tokenizer fallback
                 sent_tokenize_func = lambda text: re.split(r'(?<=[.!?])\s+', text)
