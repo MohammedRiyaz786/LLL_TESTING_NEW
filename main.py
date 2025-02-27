@@ -36,6 +36,8 @@ def main():
         src_lang = st.text_input("Source Language Code (e.g., 'en_XX')")
         tgt_lang = st.text_input("Target Language Code (e.g., 'fr_XX')")
         kwargs = {'src_lang': src_lang, 'tgt_lang': tgt_lang}
+    elif task =="Text Classification":
+        st.radio("sentiment analysis","spam detection")
     else:
         input_text = st.text_area(f"Enter test data", height=150)
 
