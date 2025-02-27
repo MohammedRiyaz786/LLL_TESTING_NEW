@@ -50,6 +50,10 @@ class MetricsCalculator:
         results = {}
         
         try:
+            if isinstance(prediction, list):
+                prediction = prediction[0] if prediction else ""
+            if isinstance(reference, list):
+                reference = reference[0] if reference else ""
             # Ensure inputs are strings and properly formatted
             prediction = str(prediction).strip()
             reference = str(reference).strip()
@@ -306,10 +310,12 @@ class MetricsCalculator:
         
         f1 = 2 * precision * recall / (precision + recall)
         return float(f1)
-
+    
     def normalize_answer(self, text: str) -> str:
         """Normalize answer for consistent comparison."""
         text = text.lower()
         text = ''.join(ch for ch in text if ch not in string.punctuation)
-        text = ' '.split(text.split())
+        # Fix the incorrect splitting logic
+        text = ' '.join(text.split()) # i was using strip earlier
         return text
+
