@@ -190,15 +190,15 @@ class MetricsCalculator:
             # Create data directory if it doesn't exist
             nltk_data_dir = os.path.expanduser('~/nltk_data')
             os.makedirs(nltk_data_dir, exist_ok=True)
-        # Download punkt
-            nltk.download('punkt', download_dir=nltk_data_dir)
             
             # Download punkt
-        # Explicitly set the data path
+            nltk.download('punkt', download_dir=nltk_data_dir)
+            
+            # Explicitly set the data path
             nltk.data.path.append(nltk_data_dir)
             
             # Verify download was successful - use the correct path
-            tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+            tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')  # <- THIS IS THE CORRECT PATH
             st.success("NLTK resources successfully loaded")
                 
         except Exception as e:
