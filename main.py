@@ -1,3 +1,10 @@
+# import streamlit as st
+# import json
+# from datetime import datetime
+# import pandas as pd
+# from model_executor import ModelExecutor
+# from metrics_calculator import MetricsCalculator
+# from config import MODEL_CONFIGS, TASK_METRICS
 import streamlit as st
 import json
 from datetime import datetime
@@ -21,9 +28,24 @@ def main():
     # Changed: Show all big models in a single dropdown
     big_model = st.sidebar.selectbox("Select the Tester Model", MODEL_CONFIGS["big_models"])
     
-    # Fixed: Properly get task-specific local models
-    available_small_models = MODEL_CONFIGS["small_models"].get(task, ["bert-base-uncased"])
-    small_model = st.sidebar.selectbox("Choose Model to be tested", available_small_models)
+    # HIGHLIGHT: Added classification type selection with radio buttons for Text Classification
+    classification_type = None
+    if task == "Text Classification":
+        classification_type = st.sidebar.radio("Classification Type", ["Sentiment Analysis", "Spam Detection"])
+    
+    # HIGHLIGHT: Updated model selection logic to handle the new structure for Text Classification
+    if task == "Text Classification" and classification_type:
+        # Get models for the specific classification type
+        available_small_models = MODEL_CONFIGS["small_models"][task][classification_type]
+        small_model = st.sidebar.selectbox("Choose Model to be tested", available_small_models)
+    else:
+        # For other tasks, use the original logic
+        if isinstance(MODEL_CONFIGS["small_models"].get(task, ["bert-base-uncased"]), dict):
+            # Handle nested dictionary for Text Classification (fallback)
+            available_small_models = ["bert-base-uncased"]
+        else:
+            available_small_models = MODEL_CONFIGS["small_models"].get(task, ["bert-base-uncased"])
+        small_model = st.sidebar.selectbox("Choose Model to be tested", available_small_models)
     
     # Task-specific input handling
     kwargs = {}
@@ -37,7 +59,10 @@ def main():
         src_lang = st.text_input("Source Language Code (e.g., 'en_XX')")
         tgt_lang = st.text_input("Target Language Code (e.g., 'fr_XX')")
         kwargs = {'src_lang': src_lang, 'tgt_lang': tgt_lang}
-    
+    # HIGHLIGHT: Added classification_type to kwargs for Text Classification
+    elif task == "Text Classification" and classification_type:
+        input_text = st.text_area(f"Enter text for {classification_type}", height=150)
+        kwargs = {'classification_type': classification_type}
     else:
         input_text = st.text_area(f"Enter test data", height=150)
 
@@ -49,6 +74,10 @@ def main():
         "small_model": {}
     }
     
+    # HIGHLIGHT: Add classification_type to results_dict if applicable
+    if task == "Text Classification" and classification_type:
+        results_dict["classification_type"] = classification_type
+    
     if st.button("Evaluate your Model now"):
         if input_text:
             with st.spinner("Processing models..."):
@@ -59,6 +88,7 @@ def main():
                 
                 with col1:
                     st.subheader("Ground Truth Data")
+                    # HIGHLIGHT: Pass classification_type to execute_big_model
                     big_model_output = model_executor.execute_big_model(big_model, input_text, task, **kwargs)
                     st.write(big_model_output)
                     results_dict["big_model"] = {
@@ -126,3 +156,123 @@ def main():
 
 if __name__ == "__main__":
     main()
+# def main():
+#     st.title("LLM Contextual Performance Testing")
+    
+#     # Initialize components
+#     model_executor = ModelExecutor()
+#     metrics_calculator = MetricsCalculator()
+    
+#     # Sidebar for model and task selection
+#     st.sidebar.header("Configuration")
+#     task = st.sidebar.selectbox("Select Task the target model is trained for", list(TASK_METRICS.keys()))
+    
+    
+#     # Changed: Show all big models in a single dropdown
+#     big_model = st.sidebar.selectbox("Select the Tester Model", MODEL_CONFIGS["big_models"])
+    
+#     # Fixed: Properly get task-specific local models
+#     available_small_models = MODEL_CONFIGS["small_models"].get(task, ["bert-base-uncased"])
+#     small_model = st.sidebar.selectbox("Choose Model to be tested", available_small_models)
+    
+#     # Task-specific input handling
+#     kwargs = {}
+#     if task == "Question Answering":
+#         context = st.text_area("Context", height=150)
+#         question = st.text_area("Question", height=80)
+#         input_text = question
+#         kwargs = {'context': context, 'question': question}
+#     elif task == "Translation":
+#         input_text = st.text_area("Input Text", height=150)
+#         src_lang = st.text_input("Source Language Code (e.g., 'en_XX')")
+#         tgt_lang = st.text_input("Target Language Code (e.g., 'fr_XX')")
+#         kwargs = {'src_lang': src_lang, 'tgt_lang': tgt_lang}
+    
+#     else:
+#         input_text = st.text_area(f"Enter test data", height=150)
+
+#     results_dict = {
+#         "timestamp": datetime.now().isoformat(),
+#         "task": task,
+#         "input": input_text if 'input_text' in locals() else "",
+#         "big_model": {},
+#         "small_model": {}
+#     }
+    
+#     if st.button("Evaluate your Model now"):
+#         if input_text:
+#             with st.spinner("Processing models..."):
+#                 st.header("Results")
+                
+#                 # Execute Models
+#                 col1, col2 = st.columns(2)
+                
+#                 with col1:
+#                     st.subheader("Ground Truth Data")
+#                     big_model_output = model_executor.execute_big_model(big_model, input_text, task, **kwargs)
+#                     st.write(big_model_output)
+#                     results_dict["big_model"] = {
+#                         "name": big_model,
+#                         "output": big_model_output
+#                     }
+                    
+#                 with col2:
+#                     st.subheader("Data generated by targeted Model")
+#                     small_model_pipeline = model_executor.get_local_model(small_model, task)
+#                     if small_model_pipeline:
+#                         small_model_output = model_executor.execute_small_model(
+#                             small_model_pipeline, 
+#                             input_text, 
+#                             task, 
+#                             **kwargs
+#                         )
+#                         st.write(small_model_output)
+#                         results_dict["small_model"] = {
+#                             "name": small_model,
+#                             "output": small_model_output
+#                         }
+
+#                 # Calculate Metrics
+#                 if big_model_output and small_model_output:
+#                     st.header("Evaluation Metrics")
+                    
+#                     with st.spinner("Calculating metrics..."):
+#                         try:
+#                             # Ensure outputs are strings
+#                             small_model_output = str(small_model_output)
+#                             big_model_output = str(big_model_output)
+                            
+
+#                             metric_results = metrics_calculator.calculate_metrics(
+#                                 prediction=small_model_output,
+#                                 reference=big_model_output,
+#                                 task=task
+#                             )
+                            
+#                             # Update results dictionary
+#                             results_dict["metrics"] = metric_results
+#                             if metric_results:
+#                                 st.subheader("Metric Scores")
+#                                 metrics_df = pd.DataFrame([ 
+#                                     {"Metric": metric, "Score": f"{score:.4f}"}
+#                                     for metric, score in metric_results.items()
+#                                 ])
+#                                 st.table(metrics_df)
+#                             else:
+#                                 st.warning("No metrics were calculated for this task type.")
+                                
+#                         except Exception as e:
+#                             st.error(f"Error calculating metrics: {str(e)}")
+
+#                     # Add download button for results
+#                     st.download_button(
+#                         "Download Results",
+#                         json.dumps(results_dict, indent=2),
+#                         f"model_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+#                         "application/json"
+#                     )
+#         else:
+#             st.warning("Please enter input text to compare models.")
+
+# if __name__ == "__main__":
+#     main()

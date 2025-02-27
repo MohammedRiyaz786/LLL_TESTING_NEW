@@ -10,7 +10,11 @@ MODEL_CONFIGS = {
         "Summarization": ["bart-large-cnn", "pegasus-xsum"],
         "Translation": ["t5-base", "mbart-large-50-many-to-many-mmt"],
         "Question Answering": ["deberta-v3-large-squad2", "roberta-base-squad2"],
-        "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
+         "Text Classification": {
+            "Sentiment Analysis": ["twitter-roberta-base-sentiment-latest"],
+            "Spam Detection": ["bert-tiny-finetuned-sms-spam-detection"]
+        },
+        # "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
         "Text Generation": ["bart-large-cnn"],
         "Text-to-Text Generation": ["t5-small", "t5-base"]
     }
