@@ -16,6 +16,10 @@ def main():
     # Sidebar for model and task selection
     st.sidebar.header("Configuration")
     task = st.sidebar.selectbox("Select Task the target model is trained for", list(TASK_METRICS.keys()))
+        # Display sub-options for Text Classification in sidebar
+    if task == "Text Classification":
+        classification_type = st.sidebar.radio("Select Classification Type", ["Sentiment Analysis", "Spam Detection"])
+        task = classification_type  # Update the task dynamically
     
     # Changed: Show all big models in a single dropdown
     big_model = st.sidebar.selectbox("Select the Tester Model", MODEL_CONFIGS["big_models"])
@@ -36,8 +40,7 @@ def main():
         src_lang = st.text_input("Source Language Code (e.g., 'en_XX')")
         tgt_lang = st.text_input("Target Language Code (e.g., 'fr_XX')")
         kwargs = {'src_lang': src_lang, 'tgt_lang': tgt_lang}
-    elif task =="Text Classification":
-        st.radio("sentiment analysis","spam detection")
+    
     else:
         input_text = st.text_area(f"Enter test data", height=150)
 
