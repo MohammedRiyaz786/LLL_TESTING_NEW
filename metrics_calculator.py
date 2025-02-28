@@ -77,6 +77,7 @@ class MetricsCalculator:
                     st.warning(f"ROUGE calculation failed: {str(e)}")
                 
                 # BLEU score
+                #
                 try:
                     bleu = evaluate.load("bleu")
                     bleu_score = bleu.compute(

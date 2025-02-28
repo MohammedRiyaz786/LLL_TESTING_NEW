@@ -22,12 +22,12 @@ class ModelExecutor:
                 
                 # Map task to pipeline task type
                 task_mapping = {
-                    "Text Generation": "text-generation",
+                    "Text Generation": "text2text-generation",
                     "Summarization": "summarization",
                     "Translation": "translation",
                     "Question Answering": "question-answering",
                     "Text Classification": "text-classification",
-                    "Text-to-Text Generation": "text2text-generation"
+                    #"Text-to-Text Generation": "text2text-generation"
                 }
                 
                 pipeline_task = task_mapping.get(task)
@@ -66,7 +66,7 @@ class ModelExecutor:
                     "Translation": f"Translate the following text from {kwargs.get('src_lang', 'source language')} to {kwargs.get('tgt_lang', 'target language')}:",
                     "Question Answering": "Answer the following question based on the given context:",
                     "Text Classification": "Process the following text:",
-                    "Text-to-Text-Generation":"Generate Text based upon the prompt ",
+                    #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                 }
                 
@@ -185,7 +185,8 @@ class ModelExecutor:
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
                 
-            else:  # Text Generation
+            elif task=="Text Generation":
+                input_text= f"complete the sentence {input_text}"  
                 result = model(input_text, max_length=150, min_length=30)
                 return result[0]['generated_text']
                 
