@@ -27,7 +27,7 @@ class MetricsCalculator:
 
     def _download_nltk_data(self):
         """Skip NLTK download and use fallback tokenizers"""
-        st.info("Using custom tokenizers for text processing")
+        #st.info("Using custom tokenizers for text processing")
         self._create_fallback_tokenizers()
         
     def _create_fallback_tokenizers(self):
