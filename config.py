@@ -16,7 +16,7 @@ MODEL_CONFIGS = {
         },
         # "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
         "Text Generation": ["bart-large-cnn","t5-small", "t5-base"],
-        "Text-to-Text Generation": ["t5-small", "t5-base"]
+        #"Text-to-Text Generation": ["t5-small", "t5-base"]
     }
 }
 
@@ -26,5 +26,5 @@ TASK_METRICS = {
     "Translation": ["bleu", "meteor", "ter", "chrf", "bertscore"],
     "Question Answering": ["f1", "answer_similarity"],
     "Text Classification": ["accuracy", "precision", "recall", "f1", "roc_auc", "matthews_correlation"],
-    "Text-to-Text Generation": ["bleu", "rouge", "meteor", "bertscore"]
+    #"Text-to-Text Generation": ["bleu", "rouge", "meteor", "bertscore"]
 }
