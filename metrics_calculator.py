@@ -91,7 +91,7 @@ class MetricsCalculator:
                 
             elif task == "Question Answering":
                 results.update({
-                    'exact_match': round(self.compute_exact_match(prediction, reference), 4),
+                    #'exact_match': round(self.compute_exact_match(prediction, reference), 4),
                     'f1': round(self.compute_f1_score(prediction, reference), 4),
                 })
                 
