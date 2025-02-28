@@ -18,11 +18,18 @@ class ModelExecutor:
         if model_name not in self.cached_models:
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
+                if "t5" in model_name.lower():
+                    pipeline_task="text2text-generation"
+                    self.cached_models[model_name]=pipeline(
+                    task=pipeline_task,
+                    model=model_name,
+                    device=device
+                )
                 #st.write(f"Debug: Using device {device}")
                 
                 # Map task to pipeline task type
                 task_mapping = {
-                    "Text Generation": "text2text-generation",
+                    "Text Generation": "text-generation",
                     "Summarization": "summarization",
                     "Translation": "translation",
                     "Question Answering": "question-answering",
@@ -130,6 +137,55 @@ class ModelExecutor:
     def execute_small_model(self, model: pipeline, input_text: str, task: str, **kwargs) -> Any:
         """Execute local models using Hugging Face pipelines with task-specific handling."""
         try:
+            if task == "Text Generation":
+            # Special handling for T5 models
+                    if "t5" in str(model.model.config._name_or_path).lower():
+                        # T5 requires specific task formatting
+                        # For completion tasks with T5, we can use a custom prompt format
+                        formatted_input = f"complete: {input_text}"
+                        
+                        result = model(
+                            formatted_input,
+                            max_length=50,
+                            num_return_sequences=1
+                        )
+                        
+                        # T5 output is already the generated portion only
+                        if isinstance(result, list) and len(result) > 0:
+                            if 'generated_text' in result[0]:
+                                return result[0]['generated_text']
+                            else:
+                                return result[0]
+                        return str(result)
+                    
+                    # For non-T5 models (GPT-2, BART, etc.)
+                    else:
+                        result = model(
+                            input_text, 
+                            max_length=50,
+                            min_length=5,
+                            do_sample=True,
+                            top_k=50,
+                            top_p=0.95,
+                            num_return_sequences=1
+                        )
+                        
+                        # Extract just the generated text without repeating the input
+                        generated_text = result[0]['generated_text']
+                        # If the generated text contains the input, try to return only the new part
+                        if input_text in generated_text:
+                            # Return everything after the input prompt
+                            return generated_text.split(input_text, 1)[1].strip()
+                        return generated_text
+
+
+
+
+
+
+
+
+
             if task == "Text Classification":
                 result = model(input_text)
                 
@@ -185,10 +241,10 @@ class ModelExecutor:
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
                 
-            elif task=="Text Generation":
-                input_text= f"complete the sentence {input_text}"  
-                result = model(input_text, max_length=150, min_length=30)
-                return result[0]['generated_text']
+            # elif task=="Text Generation":
+            #     input_text= f"complete the sentence {input_text}"  
+            #     result = model(input_text, max_length=150, min_length=30)
+            #     return result[0]['generated_text']
                 
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
