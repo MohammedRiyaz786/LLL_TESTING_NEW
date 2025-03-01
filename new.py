@@ -23,24 +23,12 @@ model = whisper.load_model(model_size)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 embedding_model = PretrainedSpeakerEmbedding("speechbrain/spkrec-ecapa-voxceleb", device=device)
 
-# Load sentiment analysis model
-sentiment_analyzer = pipeline("text-classification", model="nlptown/bert-base-multilingual-uncased-sentiment")
+# Load the custom emotion detection model
+emotion_classifier = pipeline("text-classification", model="Riyaz001/multilingual-emotion-detector")
 
-# Mapping sentiment to emotion categories
-def map_sentiment_to_emotion(sentiment_score):
-    if sentiment_score >= 4:
-        return "joy"
-    elif sentiment_score == 3:
-        return "neutral"
-    elif sentiment_score == 2:
-        return "sadness"
-    else:
-        return "anger"
-
-def get_sentiment(text):
-    result = sentiment_analyzer(text)[0]
-    sentiment_score = int(result["label"].split()[0])  # Extract the numeric score
-    return map_sentiment_to_emotion(sentiment_score)
+def get_emotion(text):
+    result = emotion_classifier(text)[0]
+    return result["label"]
 
 @app.post("/upload-audio/")
 async def upload_audio(file: UploadFile = File(...)):
@@ -69,8 +57,8 @@ async def upload_audio(file: UploadFile = File(...)):
         duration = frames / float(rate)
 
     # Initialize pyannote audio
-    audio = Audio()
-
+    audio = Audio() 
+    
     # Function to get embeddings for each segment
     def segment_embedding(segment):
         start = segment["start"]
@@ -116,7 +104,7 @@ async def upload_audio(file: UploadFile = File(...)):
         for i in range(len(segments)):
             segments[i]["speaker"] = "Speaker 1"
 
-    # Group text by speaker and perform sentiment analysis
+    # Group text by speaker and perform emotion analysis
     speaker_transcripts = {}
     for segment in segments:
         speaker = segment["speaker"]
@@ -125,23 +113,23 @@ async def upload_audio(file: UploadFile = File(...)):
             speaker_transcripts[speaker] = ""
         speaker_transcripts[speaker] += f" {text}"
 
-    # Compute sentiment for each speaker
-    sentiment_results = {}
+    # Compute emotion for each speaker using the custom model
+    emotion_results = {}
     for speaker, text in speaker_transcripts.items():
-        sentiment_results[speaker] = get_sentiment(text)
+        emotion_results[speaker] = get_emotion(text)
 
     # Format transcript output
     transcript = f"Detected Language: {detected_language}\n"
     
     if best_n_speakers == 1:
-        transcript += f"Speaker 1 (Sentiment: {sentiment_results['Speaker 1']}):\n"
+        transcript += f"Speaker 1 (Emotion: {emotion_results['Speaker 1']}):\n"
         for segment in segments:
             transcript += f"{segment['text']} "
     else:
         for i, segment in enumerate(segments):
             speaker = segment["speaker"]
             if i == 0 or segments[i - 1]["speaker"] != speaker:
-                transcript += f"\n{speaker} (Sentiment: {sentiment_results[speaker]}) {str(datetime.timedelta(seconds=round(segment['start'])))}: "
+                transcript += f"\n{speaker} (Emotion: {emotion_results[speaker]}) {str(datetime.timedelta(seconds=round(segment['start'])))}: "
             transcript += f"{segment['text']}  "
 
     # Save transcript
@@ -149,9 +137,9 @@ async def upload_audio(file: UploadFile = File(...)):
         f.write(transcript)
 
     return {
-        "message": "Transcription and sentiment analysis complete!",
+        "message": "Transcription and emotion analysis complete!",
         "detected_language": detected_language,
         "speakers": best_n_speakers,
-        "sentiment_results": sentiment_results,
+        "emotion_results": emotion_results,
         "transcript": transcript
     }
