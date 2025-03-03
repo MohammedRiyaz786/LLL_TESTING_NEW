@@ -1,18 +1,19 @@
 from fastapi import FastAPI, File, UploadFile
 import whisper
 import datetime
-import subprocess
 import torch
 import wave
 import contextlib
 import numpy as np
-import os
+import os 
 from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
 from pyannote.audio import Audio
 from pyannote.core import Segment
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import silhouette_score
 from transformers import pipeline
+import soundfile as sf
+import librosa
 
 app = FastAPI()
 
@@ -31,6 +32,19 @@ def get_emotion(text):
     result = emotion_classifier(text)[0]
     return result["label"]
 
+def convert_to_mono_wav(input_path, output_path, target_sr=16000):
+    """Convert any audio file to mono WAV using librosa and soundfile"""
+    try:
+        # Load the audio file with librosa (automatically converts to mono)
+        audio_data, sr = librosa.load(input_path, sr=target_sr, mono=True)
+        
+        # Save as WAV file
+        sf.write(output_path, audio_data, target_sr, format='WAV')
+        return True
+    except Exception as e:
+        print(f"Error converting audio: {str(e)}")
+        return False
+
 @app.post("/upload-audio/")
 async def upload_audio(file: UploadFile = File(...)):
     filename = file.filename
@@ -40,14 +54,12 @@ async def upload_audio(file: UploadFile = File(...)):
     with open(filepath, "wb") as f:
         f.write(await file.read())
     
-    # Always convert to mono WAV with consistent format
+    # Always convert to mono WAV
     converted_filepath = "processed_audio.wav"
-    try:
-        # Convert to mono, 16kHz WAV format (standard for most speech models)
-        subprocess.call(["ffmpeg", "-i", filepath, "-ac", "1", "-ar", "16000", converted_filepath, "-y"])
-        filepath = converted_filepath
-    except Exception as e:
-        return {"error": f"Audio conversion failed: {str(e)}"}
+    if not convert_to_mono_wav(filepath, converted_filepath):
+        return {"error": "Failed to process audio file. Please check the format."}
+    
+    filepath = converted_filepath
     
     # Transcribe with Whisper for the original language
     result = model.transcribe(filepath)
@@ -150,7 +162,6 @@ async def upload_audio(file: UploadFile = File(...)):
             for segment in segments:
                 segment["speaker"] = "Speaker 1"
     
-    # Rest of your code remains the same
     # Process segments for translation
     if detected_language != 'en':
         english_result = model.transcribe(filepath, task="translate")
@@ -198,6 +209,13 @@ async def upload_audio(file: UploadFile = File(...)):
         english_transcript_list.append(f"{speaker} {timestamp}")
         english_transcript_list.append(english_text)
         english_transcript_list.append(f"(Emotion: {emotion})")
+    
+    # Clean up temporary files
+    try:
+        os.remove(filepath)
+        os.remove(filename)
+    except:
+        pass
     
     return {
         "message": "Transcription complete!",
