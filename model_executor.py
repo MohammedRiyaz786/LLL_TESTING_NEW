@@ -34,6 +34,7 @@ class ModelExecutor:
                     "Translation": "translation",
                     "Question Answering": "question-answering",
                     "Text Classification": "text-classification",
+                    "Name Entity Recognition":"name entity recognition",
                     #"Text-to-Text Generation": "text2text-generation"
                 }
                 
@@ -75,6 +76,8 @@ class ModelExecutor:
                     "Text Classification": "Process the following text:",
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
+                    "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
+                    "Named Entity Recognition": "Identify and categorize named entities in the following text, such as persons, organizations, locations, and other relevant entities.",
                 }
                 
                 system_prompt = system_prompts.get(task, "")

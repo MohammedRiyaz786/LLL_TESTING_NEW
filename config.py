@@ -16,6 +16,7 @@ MODEL_CONFIGS = {
         },
         # "Text Classification": ["bert-base-uncased", "twitter-roberta-base-sentiment-latest"],
         "Text Generation": ["bart-large-cnn","t5-small", "t5-base"],
+        "Name Entity Recognition":["roberta-large-ner-english"],
         #"Text-to-Text Generation": ["t5-small", "t5-base"]
     }
 }
