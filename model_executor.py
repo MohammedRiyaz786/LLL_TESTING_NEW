@@ -77,7 +77,7 @@ class ModelExecutor:
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": "Extract only named entities from the following text. Return a JSON array of entity objects with 'word' and 'entity' fields. Example format: [{\"word\": \"John Smith\", \"entity\": \"PERSON\"}, {\"word\": \"New York\", \"entity\": \"LOCATION\"}]. Do not include any explanations or additional text. ",
+                    "Name Entity Recognition": "Extract only named entities from the following text. Return a JSON array of entity objects with 'word' and 'entity' fields. Example format: [{\"word\": \"John Smith\", \"entity\": \"PERSON\"}, {\"word\": \"New York\", \"entity\": \"LOCATION\"}]. Do not include any explanations or additional text. ",
 
                 }
                 
@@ -117,7 +117,7 @@ class ModelExecutor:
                     "Question Answering": "Answer the following question based on the given context:",
                     "Text Classification": "Process the following text:",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": """Identify and extract only named entities (e.g., persons, organizations, locations) from the given text. 
+                    "Name Entity Recognition": """Identify and extract only named entities (e.g., persons, organizations, locations) from the given text. 
                     Present the output strictly as a structured list, 
                     without any explanations, 
                     additional commentary 
