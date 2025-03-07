@@ -237,9 +237,25 @@ class ModelExecutor:
                 tgt_lang = kwargs.get('tgt_lang', '')
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
-            elif task=="Name Entity Recognition":
-                result=model(input_text)
-                return result[0]['ner']
+            
+            elif task == "Named Entity Recognition":
+                result = model(input_text)
+                
+                # Format the entities in a clean, structured way
+                entities = []
+                for entity in result:
+                    entities.append({
+                        "word": entity["word"],
+                        "entity": entity["entity"],
+                        "score": round(entity["score"], 3)
+                    })
+                
+                return entities
+
+
+            # elif task=="Name Entity Recognition":
+            #     result=model(input_text)
+            #     return result[0]['ner']
                 
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
