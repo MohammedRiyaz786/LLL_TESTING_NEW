@@ -34,7 +34,7 @@ class ModelExecutor:
                     "Translation": "translation",
                     "Question Answering": "question-answering",
                     "Text Classification": "text-classification",
-                    "Name Entity Recognition":"name entity recognition",
+                    "Name Entity Recognition":"ner",
                     #"Text-to-Text Generation": "text2text-generation"
                 }
                 
@@ -181,14 +181,6 @@ class ModelExecutor:
                             return generated_text.split(input_text, 1)[1].strip()
                         return generated_text
 
-
-
-
-
-
-
-
-
             if task == "Text Classification":
                 result = model(input_text)
                 
@@ -243,11 +235,6 @@ class ModelExecutor:
                 tgt_lang = kwargs.get('tgt_lang', '')
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
-                
-            # elif task=="Text Generation":
-            #     input_text= f"complete the sentence {input_text}"  
-            #     result = model(input_text, max_length=150, min_length=30)
-            #     return result[0]['generated_text']
                 
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
