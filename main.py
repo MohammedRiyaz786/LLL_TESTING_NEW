@@ -180,18 +180,7 @@ def main():
     # Changed: Show all big models in a single dropdown
     big_model = st.sidebar.selectbox("Select the Tester Model", MODEL_CONFIGS["big_models"])
 
-    # Special handling for NER results display
-    if task == "Named Entity Recognition" and isinstance(small_model_output, list):
-        st.subheader("Extracted Entities:")
-        
-        # Create a DataFrame for cleaner display
-        if small_model_output:
-            entities_df = pd.DataFrame(small_model_output)
-            st.dataframe(entities_df)
-        else:
-            st.write("No entities found")
-    else:
-        st.write(small_model_output)
+
         
     # Classification type selection with radio buttons for Text Classification
     classification_type = None
@@ -245,6 +234,18 @@ def main():
         "big_model": {},
         "small_model": {}
     }
+    # Special handling for NER results display
+    if task == "Named Entity Recognition" and isinstance(small_model_output, list):
+        st.subheader("Extracted Entities:")
+        
+        # Create a DataFrame for cleaner display
+        if small_model_output:
+            entities_df = pd.DataFrame(small_model_output)
+            st.dataframe(entities_df)
+        else:
+            st.write("No entities found")
+    else:
+        st.write(small_model_output)
     
     # Add classification_type to results_dict if applicable
     if task == "Text Classification" and classification_type:
@@ -282,6 +283,8 @@ def main():
                             "name": small_model,
                             "output": small_model_output
                         }
+
+
 
                 # Calculate Metrics
                 if big_model_output and small_model_output:
