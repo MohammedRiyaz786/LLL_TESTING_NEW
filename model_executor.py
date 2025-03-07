@@ -258,8 +258,8 @@ class ModelExecutor:
 
                 if result:  # Ensure there is at least one entity
                     first_entity = {
-                        "word": result[0]["word"],
-                        "entity": result[0]["entity"]
+                        "word": result["word"],
+                        "entity": result["entity"]
                     }
                     return first_entity  # Return only the first entity
 
