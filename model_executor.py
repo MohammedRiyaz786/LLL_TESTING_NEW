@@ -77,7 +77,7 @@ class ModelExecutor:
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations."
+                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations.Make sure not provide any explanation "
 ,
                 }
                 
