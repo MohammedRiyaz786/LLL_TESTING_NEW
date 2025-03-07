@@ -242,17 +242,18 @@ class ModelExecutor:
                 result = model(input_text)
                 
                 # Format the entities for better display
-                formatted_entities = []
+                #formatted_entities = []
                 for entity in result:
-                    formatted_entities.append({
-                        "word": entity["word"],
-                        "entity": entity["entity"],
-                        #"score": round(float(entity["score"]), 3),
-                        #"start": entity["start"],
-                        #"end": entity["end"]
-                    })
+                    return f"{entity['entity_group'],entity['word']}"
+                    # formatted_entities.append({
+                    #     "word": entity["word"],
+                    #     "entity": entity["entity"],
+                    #     #"score": round(float(entity["score"]), 3),
+                    #     #"start": entity["start"],
+                    #     #"end": entity["end"]
+                    # })
                 
-                return formatted_entities
+                # return formatted_entities
 
 
         except Exception as e:
