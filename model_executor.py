@@ -255,10 +255,6 @@ class ModelExecutor:
                 return formatted_entities
 
 
-            # elif task=="Name Entity Recognition":
-            #     result=model(input_text)
-            #     return result[0]['ner']
-                
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
             return "Error executing model"
