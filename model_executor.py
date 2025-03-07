@@ -259,7 +259,8 @@ class ModelExecutor:
                 if result:  # Ensure there is at least one entity
                     formatted_entities = []
                     for entity in result:
-                        formatted_entities.append(f'{entity["word"]}: {entity["entity"]}')
+                        word = entity["word"].replace("Ġ", "")  # Remove unwanted characters
+                        formatted_entities.append(f'{word}: {entity["entity"]}')
                     
                     return "\n".join(formatted_entities)  # Convert list to a readable string
 
