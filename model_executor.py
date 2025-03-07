@@ -238,21 +238,32 @@ class ModelExecutor:
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
             
+            # elif task == "Name Entity Recognition":
+            #     result = model(input_text)
+                
+            #     # Format the entities for better display
+            #     formatted_entities = []
+            #     for entity in result:
+            #         formatted_entities.append({
+            #             "word": entity["word"],
+            #             "entity": entity["entity"],
+            #             #"score": round(float(entity["score"]), 3),
+            #             #"start": entity["start"],
+            #             #"end": entity["end"]
+            #         })
+                
+            #     return formatted_entities
             elif task == "Name Entity Recognition":
                 result = model(input_text)
-                
-                # Format the entities for better display
-                formatted_entities = []
-                for entity in result:
-                    formatted_entities.append({
-                        "word": entity["word"],
-                        "entity": entity["entity"],
-                        #"score": round(float(entity["score"]), 3),
-                        #"start": entity["start"],
-                        #"end": entity["end"]
-                    })
-                
-                return formatted_entities
+
+                if result:  # Ensure there is at least one entity
+                    first_entity = {
+                        "word": result[0]["word"],
+                        "entity": result[0]["entity"]
+                    }
+                    return first_entity  # Return only the first entity
+
+                return {} 
 
 
         except Exception as e:
