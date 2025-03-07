@@ -117,6 +117,7 @@ class ModelExecutor:
                     "Question Answering": "Answer the following question based on the given context:",
                     "Text Classification": "Process the following text:",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
+                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations.Make sure not provide any explanation ",
                 }
                 
                 system_prompt = system_prompts.get(task, "")
@@ -236,6 +237,9 @@ class ModelExecutor:
                 tgt_lang = kwargs.get('tgt_lang', '')
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
+            elif task=="Name Entity Recognition":
+                result=model(input_text)
+                return[0]['ner']
                 
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
