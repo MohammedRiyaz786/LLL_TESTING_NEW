@@ -238,7 +238,7 @@ class ModelExecutor:
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
             
-            elif task == "Named Entity Recognition":
+            elif task == "Name Entity Recognition":
                 result = model(input_text)
                 
                 # Format the entities for better display
