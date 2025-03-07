@@ -247,9 +247,9 @@ class ModelExecutor:
                     formatted_entities.append({
                         "word": entity["word"],
                         "entity": entity["entity"],
-                        "score": round(float(entity["score"]), 3),
-                        "start": entity["start"],
-                        "end": entity["end"]
+                        #"score": round(float(entity["score"]), 3),
+                        #"start": entity["start"],
+                        #"end": entity["end"]
                     })
                 
                 return formatted_entities
