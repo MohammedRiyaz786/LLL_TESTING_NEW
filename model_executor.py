@@ -257,13 +257,14 @@ class ModelExecutor:
                 result = model(input_text)
 
                 if result:  # Ensure there is at least one entity
-                    first_entity = {
-                        "word": result["word"],
-                        "entity": result["entity"]
-                    }
-                    return first_entity  # Return only the first entity
+                    formatted_entities = []
+                    for entity in result:
+                        formatted_entities.append(f'{entity["word"]}: {entity["entity"]}')
+                    
+                    return "\n".join(formatted_entities)  # Convert list to a readable string
 
-                return {} 
+                return "No entities found."
+
 
 
         except Exception as e:
