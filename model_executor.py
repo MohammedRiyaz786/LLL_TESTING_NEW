@@ -117,7 +117,7 @@ class ModelExecutor:
                     "Question Answering": "Answer the following question based on the given context:",
                     "Text Classification": "Process the following text:",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations.Make sure not provide any explanation ",
+                    "Named Entity Recognition": "Identify and extract only named entities (e.g., persons, organizations, locations) from the given text. Present the output strictly as a structured list, without any explanations, additional commentary, or fact-checking. Do not provide any reasoning or context. ",
                 }
                 
                 system_prompt = system_prompts.get(task, "")
@@ -130,7 +130,7 @@ class ModelExecutor:
                     elif classification_type == "Spam Detection":
                         system_prompt = "Classify the following message as either 'Spam' or 'Not Spam' in just one word do not tell any extra things:"
                 
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash',generation_config={"temperature":0.5})
                 response = model.generate_content(f"{system_prompt}\n{prompt}")
                 return response.text
                 
@@ -163,7 +163,7 @@ class ModelExecutor:
                                 return result[0]
                         return str(result)
                     
-                    # For non-T5 models (GPT-2, BART, etc.)
+                   
                     else:
                         result = model(
                             input_text, 
