@@ -77,8 +77,8 @@ class ModelExecutor:
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations.Make sure not provide any explanation "
-,
+                    "Named Entity Recognition": "Extract only named entities from the following text. Return a JSON array of entity objects with 'word' and 'entity' fields. Example format: [{\"word\": \"John Smith\", \"entity\": \"PERSON\"}, {\"word\": \"New York\", \"entity\": \"LOCATION\"}]. Do not include any explanations or additional text. ",
+
                 }
                 
                 system_prompt = system_prompts.get(task, "")
@@ -241,16 +241,18 @@ class ModelExecutor:
             elif task == "Named Entity Recognition":
                 result = model(input_text)
                 
-                # Format the entities in a clean, structured way
-                entities = []
+                # Format the entities for better display
+                formatted_entities = []
                 for entity in result:
-                    entities.append({
+                    formatted_entities.append({
                         "word": entity["word"],
                         "entity": entity["entity"],
-                        "score": round(entity["score"], 3)
+                        "score": round(float(entity["score"]), 3),
+                        "start": entity["start"],
+                        "end": entity["end"]
                     })
                 
-                return entities
+                return formatted_entities
 
 
             # elif task=="Name Entity Recognition":

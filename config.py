@@ -26,7 +26,7 @@ TASK_METRICS = {
     "Summarization": ["rouge", "bleu", "bertscore", "meteor",""],
     "Translation": ["bleu", "meteor", "ter", "chrf", "bertscore"],
     "Question Answering": ["f1", "answer_similarity"],
-    "Name Entity Recognition":['Entity-level Precision', 'Recall', 'F1-Score'],
+    "Named Entity Recognition": ['precision', 'recall', 'f1'],
     "Text Classification": ["accuracy", "precision", "recall", "f1", "roc_auc", "matthews_correlation"],
     #"Text-to-Text Generation": ["bleu", "rouge", "meteor", "bertscore"]
 }
