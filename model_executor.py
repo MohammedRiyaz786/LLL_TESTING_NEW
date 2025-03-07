@@ -239,7 +239,7 @@ class ModelExecutor:
                 return result[0]['translation_text']
             elif task=="Name Entity Recognition":
                 result=model(input_text)
-                return[0]['ner']
+                return result[0]['ner']
                 
         except Exception as e:
             st.error(f"Error executing local model: {str(e)}")
