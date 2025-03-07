@@ -138,6 +138,7 @@ class ModelExecutor:
                         system_prompt = "Classify the following message as either 'Spam' or 'Not Spam' in just one word do not tell any extra things:"
                 
                 model = genai.GenerativeModel('gemini-1.5-flash',generation_config={"temperature":0.3})
+                print(f"Instructions :{system_prompt}\n\nUser's prompt :{prompt}")
                 response = model.generate_content(f"Instructions :{system_prompt}\n\nUser's prompt :{prompt}")
                 return response.text
                 
