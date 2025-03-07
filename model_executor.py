@@ -77,7 +77,8 @@ class ModelExecutor:
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Named Entity Recognition": "Identify and categorize named entities in the following text, such as persons, organizations, locations, and other relevant entities.",
+                    "Named Entity Recognition": "Extract and return only named entities (e.g., persons, organizations, locations) from the following text. Output them in a structured format as a list without any explanations."
+,
                 }
                 
                 system_prompt = system_prompts.get(task, "")
