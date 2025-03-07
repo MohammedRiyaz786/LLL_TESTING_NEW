@@ -235,8 +235,7 @@ def main():
         "small_model": {}
     }
     # Special handling for NER results display
-    small_model_output = None
-    big_model_output = None
+
     if task == "Named Entity Recognition" and isinstance(small_model_output, list):
         st.subheader("Extracted Entities:")
         
