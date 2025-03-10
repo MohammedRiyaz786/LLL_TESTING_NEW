@@ -292,9 +292,9 @@ class ModelExecutor:
                             "word": word,
                             "entity": entity["entity"],
                             "score": round(float(entity.get("score", 0)), 4),
-                            "index": entity.get("index", 0),
-                            "start": entity.get("start", 0),
-                            "end": entity.get("end", 0)
+                            #"index": entity.get("index", 0),
+                            #"start": entity.get("start", 0),
+                            #"end": entity.get("end", 0)
                         })
                 
                 import json
