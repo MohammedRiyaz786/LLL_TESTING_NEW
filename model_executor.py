@@ -117,15 +117,30 @@ class ModelExecutor:
                     "Question Answering": "Answer the following question based on the given context:",
                     "Text Classification": "Process the following text:",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Name Entity Recognition": """Identify and extract only named entities (e.g., persons, organizations, locations) from the given text. 
-                    Present the output strictly as a structured list, 
-                    without any explanations, 
-                    additional commentary 
-                    fact-checking. 
-                    Do not provide any reasoning or context. 
-                    Reponse from you should extract these from user prompts : ORG ,PER ,LOC
-                    """,
+                     "Name Entity Recognition": """Identify named entities in the following text. 
+                Return ONLY a valid JSON array of objects with the format:
+                {
+                  "entities": [
+                    {
+                      "word": "entity text",
+                      "entity": "entity type",
+                      "score": 1.0
+                    },
+                    ...
+                  ]
                 }
+                Include only PERSON (PER), ORGANIZATION (ORG), and LOCATION (LOC) entity types.
+                The response must be valid JSON with no additional text, explanations, or non-JSON characters.""",
+            }
+                    # "Name Entity Recognition": """Identify and extract only named entities (e.g., persons, organizations, locations) from the given text. 
+                    # Present the output strictly as a structured list, 
+                    # without any explanations, 
+                    # additional commentary 
+                    # fact-checking. 
+                    # Do not provide any reasoning or context. 
+                    # Reponse from you should extract these from user prompts : ORG ,PER ,LOC
+                
+                
                 
                 system_prompt = system_prompts.get(task, "")
                 
@@ -246,33 +261,44 @@ class ModelExecutor:
                 result = model(input_text, src_lang=src_lang, tgt_lang=tgt_lang)
                 return result[0]['translation_text']
             
+
             # elif task == "Name Entity Recognition":
             #     result = model(input_text)
-                
-            #     # Format the entities for better display
-            #     formatted_entities = []
-            #     for entity in result:
-            #         formatted_entities.append({
-            #             "word": entity["word"],
-            #             "entity": entity["entity"],
-            #             #"score": round(float(entity["score"]), 3),
-            #             #"start": entity["start"],
-            #             #"end": entity["end"]
-            #         })
-                
-            #     return formatted_entities
+
+            #     if result:  # Ensure there is at least one entity
+            #         formatted_entities = []
+            #         for entity in result:
+            #             word = entity["word"].replace("Ġ", "")  # Remove unwanted characters
+            #             formatted_entities.append(f'{word}: {entity["entity"]}')
+                    
+            #         return "\n".join(formatted_entities)  # Convert list to a readable string
+
+            #     return "No entities found."
             elif task == "Name Entity Recognition":
                 result = model(input_text)
-
-                if result:  # Ensure there is at least one entity
-                    formatted_entities = []
+                
+                # Convert result to standardized JSON format
+                entities = []
+                if result:
                     for entity in result:
-                        word = entity["word"].replace("Ġ", "")  # Remove unwanted characters
-                        formatted_entities.append(f'{word}: {entity["entity"]}')
-                    
-                    return "\n".join(formatted_entities)  # Convert list to a readable string
-
-                return "No entities found."
+                        # Clean up the word (remove special tokens like 'Ġ')
+                        word = entity["word"].replace("Ġ", "").strip()
+                        
+                        # Skip empty words
+                        if not word:
+                            continue
+                            
+                        entities.append({
+                            "word": word,
+                            "entity": entity["entity"],
+                            "score": round(float(entity.get("score", 0)), 4),
+                            "index": entity.get("index", 0),
+                            "start": entity.get("start", 0),
+                            "end": entity.get("end", 0)
+                        })
+                
+                import json
+                return json.dumps({"entities": entities}, ensure_ascii=False)
 
 
 
