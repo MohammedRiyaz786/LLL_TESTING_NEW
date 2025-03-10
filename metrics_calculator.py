@@ -244,7 +244,7 @@ class MetricsCalculator:
                     model_type="microsoft/deberta-xlarge-mnli",
                     batch_size=1
                 )
-                results['bert_score'] = round(float(bert_scores['f1'][0]), 4)
+                results['bert score'] = round(float(bert_scores['f1'][0]), 4)
             except Exception as e:
                 st.warning(f"BERTScore computation failed: {str(e)}")
             
