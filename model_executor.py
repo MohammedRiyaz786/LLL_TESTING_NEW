@@ -77,9 +77,24 @@ class ModelExecutor:
                     #"Text-to-Text-Generation":"Generate Text based upon the prompt ",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
                     "Text Generation": "Generate a coherent and contextually relevant response based on the following prompt",
-                    "Name Entity Recognition": "Extract only named entities from the following text. Return a JSON array of entity objects with 'word' and 'entity' fields. Example format: [{\"word\": \"John Smith\", \"entity\": \"PERSON\"}, {\"word\": \"New York\", \"entity\": \"LOCATION\"}]. Do not include any explanations or additional text. ",
-
+                                    "Name Entity Recognition": """Identify named entities in the following text. 
+                Return ONLY a valid JSON array of objects with the format:
+                {
+                  "entities": [
+                    {
+                      "word": "entity text",
+                      "entity": "entity type",
+                      "score": 1.0
+                    },
+                    ...
+                  ]
                 }
+                Include only PERSON (PER), ORGANIZATION (ORG), and LOCATION (LOC) entity types.
+                The response must be valid JSON with no additional text, explanations, or non-JSON characters.""",
+            }
+
+
+                
                 
                 system_prompt = system_prompts.get(task, "")
                 
