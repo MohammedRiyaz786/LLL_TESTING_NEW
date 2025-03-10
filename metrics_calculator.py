@@ -44,7 +44,115 @@ class MetricsCalculator:
         global sent_tokenize, word_tokenize
         sent_tokenize = simple_sent_tokenize
         word_tokenize = simple_word_tokenize
-
+    
+    def calculate_ner_metrics(self, prediction: str, reference: str) -> Dict[str, float]:
+        """
+        Calculate precision, recall, and F1 score for Named Entity Recognition task.
+        
+        Args:
+            prediction: JSON string containing predicted entities
+            reference: JSON string containing reference entities
+            
+        Returns:
+            Dictionary with precision, recall, and F1 metrics
+        """
+        import json
+        
+        results = {}
+        
+        try:
+            # Parse the JSON strings
+            try:
+                pred_data = json.loads(prediction)
+                ref_data = json.loads(reference)
+                
+                # Extract entities
+                pred_entities = pred_data.get("entities", [])
+                ref_entities = ref_data.get("entities", [])
+                
+            except json.JSONDecodeError as e:
+                st.error(f"JSON parsing error: {str(e)}")
+                # Try to handle potential formatting issues in the response
+                if isinstance(prediction, str) and isinstance(reference, str):
+                    # If strings but not valid JSON, try to extract entities using regex
+                    import re
+                    
+                    def extract_entities_from_text(text):
+                        # Pattern to match word: entity pairs
+                        pattern = r'([^:\n]+):\s*(ORG|PER|LOC|PERSON|ORGANIZATION|LOCATION)'
+                        matches = re.findall(pattern, text)
+                        return [{"word": word.strip(), "entity": entity.strip()} for word, entity in matches]
+                    
+                    pred_entities = extract_entities_from_text(prediction)
+                    ref_entities = extract_entities_from_text(reference)
+                else:
+                    return {"precision": 0, "recall": 0, "f1": 0, "error": "Invalid input format"}
+            
+            # Normalize entity types (some models use different abbreviations)
+            entity_mapping = {
+                "PERSON": "PER",
+                "ORGANIZATION": "ORG", 
+                "LOCATION": "LOC"
+            }
+            
+            # Normalize predictions and references
+            norm_pred_entities = []
+            for entity in pred_entities:
+                entity_type = entity.get("entity", "")
+                # Map full names to abbreviations if needed
+                norm_type = entity_mapping.get(entity_type, entity_type)
+                norm_pred_entities.append({
+                    "word": entity.get("word", "").lower().strip(),
+                    "entity": norm_type
+                })
+                
+            norm_ref_entities = []
+            for entity in ref_entities:
+                entity_type = entity.get("entity", "")
+                # Map full names to abbreviations if needed
+                norm_type = entity_mapping.get(entity_type, entity_type)
+                norm_ref_entities.append({
+                    "word": entity.get("word", "").lower().strip(),
+                    "entity": norm_type
+                })
+            
+            # Calculate metrics
+            # True positives: entities that appear in both prediction and reference with the same type
+            tp = 0
+            for pred in norm_pred_entities:
+                for ref in norm_ref_entities:
+                    if pred["word"] == ref["word"] and pred["entity"] == ref["entity"]:
+                        tp += 1
+                        break
+            
+            # False positives: entities in prediction but not in reference
+            fp = len(norm_pred_entities) - tp
+            
+            # False negatives: entities in reference but not in prediction
+            fn = len(norm_ref_entities) - tp
+            
+            # Calculate precision, recall, and F1
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+            
+            # Add metrics to results
+            results = {
+                "precision": round(precision, 4),
+                "recall": round(recall, 4),
+                "f1": round(f1, 4),
+                "true_positives": tp,
+                "false_positives": fp,
+                "false_negatives": fn
+            }
+            
+            return results
+            
+        except Exception as e:
+            st.error(f"Error in NER metric calculation: {str(e)}")
+            return {"precision": 0, "recall": 0, "f1": 0, "error": str(e)}
+    
+    
     def calculate_metrics(self, prediction: str, reference: str, task: str) -> Dict[str, float]:
         """Calculate metrics between model outputs based on task type."""
         results = {}
@@ -118,6 +226,11 @@ class MetricsCalculator:
                     results['chrf'] = round(chrf_score['score'], 4)
                 except Exception as e:
                     st.warning(f"chrF calculation failed: {str(e)}")
+
+            elif task == "Name Entity Recognition":
+                # Use the specialized NER metrics calculation
+                ner_metrics = self.calculate_ner_metrics(prediction, reference)
+                results.update(ner_metrics)
                 
             elif task == "Text Classification":
                 results['accuracy'] = round(float(prediction.strip().lower() == reference.strip().lower()), 4)
